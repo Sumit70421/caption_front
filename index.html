@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <style>
+      h1 {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        font-size: 36px;
+        font-weight: bold;
+        margin-top: 50px;
+      }
+      .form-container {
+        width: 500px;
+        margin: 0 auto;
+        text-align: center;
+      }
+      .video-input {
+        display: block;
+        margin: 30px auto;
+        padding: 20px;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      .video-input label {
+        cursor: pointer;
+        padding: 10px 20px;
+        background-color: #3498db;
+        color: #fff;
+        border-radius: 5px;
+      }
+      .submit-btn {
+        display: block;
+        margin: 30px auto;
+        padding: 10px 20px;
+        background-color: #3498db;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Video Caption Generator</h1>
+    <div class="form-container">
+      <form id="video-form">
+        <div class="video-input">
+          <input type="file" id="video-file" accept="video/*">
+          <label for="video-file">Choose a video file</label>
+        </div>
+        <button type="submit" class="submit-btn">Generate Caption</button>
+      </form>
+    </div>
+  </body>
+</html>
+<script>
+document.getElementById('video-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  const videoFile = document.getElementById('video-file').files[0];
+  const formData = new FormData();
+  formData.append('video', videoFile);
+
+  const progressBar = document.createElement('progress');
+  progressBar.value = 0;
+  progressBar.max = 100;
+  document.body.appendChild(progressBar);
+
+  fetch('/upload-video', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    onUploadProgress: (progressEvent) => {
+      progressBar.value = (progressEvent.loaded / progressEvent.total) * 100;
+    }
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Captions found : ",data)
+      progressBar.remove();
+      const successMessage = document.createElement('p');
+      successMessage.textContent = 'Upload complete!';
+      successMessage.style.textAlign = 'center';
+      successMessage.style.marginTop = '50px';
+      document.body.appendChild(successMessage);
+
+      const captionsContainer = document.createElement('div');
+      captionsContainer.style.marginTop = '50px';
+      document.body.appendChild(captionsContainer);
+
+      data.captions.forEach((caption) => {
+        const captionElement = document.createElement('p');
+        captionElement.textContent = caption;
+        captionsContainer.appendChild(captionElement);
+      });
+    })
+    .catch((error) => {
+      progressBar.remove();
+      console.error(error);
+    });
+});
+
+</script>
